@@ -19,6 +19,11 @@ namespace Editor.Engine
         public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
         public float Scale { get; set; }
 
+        public Vector3 RelativePos { get; set; }
+        public Models ParentPlanet { get; set; }
+        public float Speed { get; set; }
+
+
         // Texturing
         public Texture Texture { get; set; }
 
@@ -31,9 +36,10 @@ namespace Editor.Engine
                       string _texture,
                       string _effect,
                       Vector3 _position,
-                      float _scale)
+                      float _scale,
+                      float _rotation)
         {
-            Create(_content, _model, _texture, _effect, _position, _scale);
+            Create(_content, _model, _texture, _effect, _position, _scale, _rotation);
         }
 
         public void Create(ContentManager _content,
@@ -41,7 +47,8 @@ namespace Editor.Engine
                             string _texture,
                             string _effect,
                             Vector3 _position,
-                            float _scale)
+                            float _scale,
+                            float _rotation)
         {
             Mesh = _content.Load<Model>(_model);
             Mesh.Tag = _model;
@@ -52,6 +59,9 @@ namespace Editor.Engine
             SetShader(Shader);
             m_position = _position;
             Scale = _scale;
+            m_rotation.Y = _rotation ;
+
+
         }
 
         public void SetShader(Effect _effect)
@@ -73,11 +83,19 @@ namespace Editor.Engine
                 Matrix.CreateTranslation(Position);
         }
 
-        public void Render(Matrix _view, Matrix _projection)
+		public void SetTranslation(Vector3 translation)
+		{
+			Position = translation;
+		}
+
+		public void Render(Matrix _view, Matrix _projection, Vector3 _rotation, Vector3 _direction)
         {
-            m_rotation.X += 0.001f;
-            m_rotation.Y += 0.005f;
-           // m_rotation.Z += 0.05f;
+            //m_rotation.X += 0.001f;
+            //m_rotation.Y += 0.005f;
+            // m_rotation.Z += 0.05f;
+
+            m_rotation += new Vector3(_rotation.X, _rotation.Y, 0);
+            m_position += new Vector3(_direction.X, _direction.Y, 0);
 
             Shader.Parameters["World"].SetValue(GetTransform());
             Shader.Parameters["WorldViewProjection"].SetValue(GetTransform() * _view * _projection);
@@ -108,7 +126,7 @@ namespace Editor.Engine
             Position = HelpDeserialize.Vec3(_stream);
             Rotation = HelpDeserialize.Vec3(_stream);
             Scale = _stream.ReadSingle();
-            Create(_content, mesh, texture, shader, Position, Scale);
+            Create(_content, mesh, texture, shader, Position, Scale, m_rotation.Y);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Editor.Editor
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DeepPink);
+            GraphicsDevice.Clear(Color.Black);
 
             if (Project != null) Project.Render();
 

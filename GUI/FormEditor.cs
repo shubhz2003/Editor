@@ -71,5 +71,20 @@ namespace Editor
 				Game.AdjustAspectRatio();
 			}
 		}
+
+		private void addSunToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			Game.Project.CurrentLevel.LoadSun(Game.Content);
+		}
+
+		private void addPlanetToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			Game.Project.CurrentLevel.LoadPlanet(Game.Content);
+		}
+
+		private void addMoonToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			Game.Project.CurrentLevel.LoadMoon(Game.Content);
+		}
 	}
 }
