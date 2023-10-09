@@ -57,9 +57,9 @@ namespace Editor.Engine
 			if (m_worlds.Count < 5)
 			{
 				Models planetModel = new(_content, "World", "WorldDiffuse", "MyShader",
-					new Vector3(m_rand.Next(-150,150), m_rand.Next(-90,90), 0), // Randomized Position 
+					new Vector3(m_rand.Next(-150,151), m_rand.Next(-90,91), 0), // Randomized Position 
 					0.75f,         // Scale of 0.75x
-					(float)m_rand.Next(2,4)/100);      // Roatation speed around the sun
+					(float)m_rand.Next(2,3)/100);      // Roatation speed around the sun
 				m_worlds.Add(planetModel);
 			}
 		}
@@ -71,7 +71,7 @@ namespace Editor.Engine
 			{
                 Models moonModel = new(_content, "Moon", "MoonDiffuse", "MyShader",
                     new Vector3(model.Position.X + 20, model.Position.Y, model.Position.Z), // Position
-                    (float)m_rand.Next(2, 5) / 10,         // Scale of 2x
+                    (float)m_rand.Next(2, 4) / 10,         // Scale of 2x
                     (float)m_rand.Next(5, 10) / 1000);    // Rotation
                 moonModel.RelativePos = new Vector3(20, 0, 0);
 				moonModel.ParentPlanet = model;
@@ -97,7 +97,8 @@ namespace Editor.Engine
                     planetDir.Normalize();
                     planetDir *= 10;
 
-                    planet.Render(m_camera.View, m_camera.Projection, new Vector3(0, planet.Speed, 0), planetDir);
+					float orbitSpeed = (float)(m_rand.NextDouble() * 0.002 + 0.001);
+					planet.Render(m_camera.View, m_camera.Projection, new Vector3(0, planet.orbitSpeed, 0), planetDir);
                 }
             }
 
@@ -110,8 +111,9 @@ namespace Editor.Engine
                 // Setting the position the moon should be after planet has moved
                 moon.SetTranslation(moon.ParentPlanet.Position + moon.RelativePos);
 
-                // Rendering and rotating around the planet
-                moon.Render(m_camera.View, m_camera.Projection, new Vector3(0, moon.Speed, 0), moonDir);
+				// Rendering and rotating around the planet
+				float orbitSpeed = (float)(m_rand.NextDouble() * 0.02 + 0.01);
+				moon.Render(m_camera.View, m_camera.Projection, new Vector3(0, moon.orbitSpeed, 0), moonDir);
 
                 // Setting the relativePos after Translation
                 moon.RelativePos = moon.Position - moon.ParentPlanet.Position;

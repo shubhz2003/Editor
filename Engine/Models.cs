@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.IO;
 
 namespace Editor.Engine
@@ -21,7 +22,7 @@ namespace Editor.Engine
 
         public Vector3 RelativePos { get; set; }
         public Models ParentPlanet { get; set; }
-        public float Speed { get; set; }
+        public float orbitSpeed { get; set; }
 
 
         // Texturing
@@ -95,7 +96,7 @@ namespace Editor.Engine
             // m_rotation.Z += 0.05f;
 
             m_rotation += new Vector3(_rotation.X, _rotation.Y, 0);
-            m_position += new Vector3(_direction.X, _direction.Y, 0);
+            m_position += new Vector3(_direction.X / 100, _direction.Y / 100, 0);
 
             Shader.Parameters["World"].SetValue(GetTransform());
             Shader.Parameters["WorldViewProjection"].SetValue(GetTransform() * _view * _projection);
@@ -106,7 +107,10 @@ namespace Editor.Engine
                 mesh.Draw();
             }
 
-        }
+			// Update planet's orbit
+			//m_position.X = (float)Math.Cos(m_rotation.Y * orbitSpeed) * 150;
+			//m_position.Y = (float)Math.Sin(m_rotation.Y * orbitSpeed) * 90;
+		}
 
         public void Serialize(BinaryWriter _stream)
         {
