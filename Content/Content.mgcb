@@ -13,6 +13,27 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Arial16.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Arial16.spritefont
+
+#begin Arial18.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Arial18.spritefont
+
+#begin Arial20.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Arial20.spritefont
+
 #begin Metal.jpg
 /importer:TextureImporter
 /processor:TextureProcessor

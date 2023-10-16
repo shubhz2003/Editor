@@ -3,6 +3,7 @@ using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework.Content;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Policy;
 
 namespace Editor.Editor
 {
@@ -33,6 +34,11 @@ namespace Editor.Editor
             CurrentLevel = new();
             CurrentLevel.LoadContent(_content);
             Levels.Add(CurrentLevel);
+        }
+
+        public void Update(float _delta)
+        {
+            CurrentLevel?.Update(_delta);
         }
 
         public void Render()
