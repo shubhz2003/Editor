@@ -3,22 +3,69 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System.IO;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using SharpDX.Direct2D1.Effects;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Editor.Engine
 {
-    class Models : ISerializable
+    class Models : ISerializable , INotifyPropertyChanged
     {
+
         //Members
         private Vector3 m_position;
         private Vector3 m_rotation;
+        private Model m_mesh;
+        private Effect m_shader;
+        private float m_scale;
+        private bool m_selected;
+        private string m_diffuseTexture;
+        private bool isDirty = false;
+
 
         // Accessors
-        public Model Mesh { get; set; }
-        public Effect Shader { get; set; }
-        public Vector3 Position { get => m_position; set { m_position = value; } }
-        public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
-        public float Scale { get; set; }
-        public bool Selected {  get; set; } = false;
+        [Browsable(false)]
+        public Model Mesh { get => m_mesh; set { m_mesh = value; OnPropertyChanged(); } }
+
+        [Browsable(false)]
+        public Effect Shader { get => m_shader; set { m_shader = value; OnPropertyChanged(); } }
+
+        [Category("Appearance")]
+        [Description("Diffuse texture of the model.")]
+        [TypeConverter(typeof(TextureConverter))]
+        public string DiffuseTexture
+        {
+            get => m_diffuseTexture;
+            set
+            {
+                if (m_diffuseTexture != value)
+                {
+                    m_diffuseTexture = value;
+                    OnPropertyChanged();
+                    isDirty = true;
+                }
+            }
+        }
+        [Category("State")]
+        [Description("Selection status.")]
+        public bool Selected { get => m_selected; set { m_selected = value; OnPropertyChanged(); } }
+
+        [Category("Transformation")]
+        [Description("Position of the model in world space.")]
+        public Vector3 Position { get => m_position; set { m_position = value; OnPropertyChanged(); } }
+
+        [Category("Transformation")]
+        [Description("Rotation of the model.")]
+        public Vector3 Rotation { get => m_rotation; set { m_rotation = value; OnPropertyChanged(); } }
+
+        [Category("Transformation")]
+        [Description("Scale of the model.")]
+        public float Scale { get => m_scale; set { m_scale = value; OnPropertyChanged(); } }
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
 
         // Texturing
         public Texture Texture { get; set; }
@@ -109,6 +156,25 @@ namespace Editor.Engine
                 mesh.Draw();
             }
 
+        }
+
+        public bool IsDirty
+        {
+            get { return isDirty; }
+            set
+            {
+                if (isDirty != value)
+                {
+                    isDirty = value;
+                    OnPropertyChanged(nameof(IsDirty));
+                }
+            }
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            IsDirty = true;
         }
 
         public void Serialize(BinaryWriter _stream)

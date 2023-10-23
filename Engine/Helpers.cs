@@ -1,5 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
+using static System.ComponentModel.TypeConverter;
 
 namespace Editor.Engine
 {
@@ -22,6 +25,17 @@ namespace Editor.Engine
             v.Y = _stream.ReadSingle();
             v.Z = _stream.ReadSingle();
             return v;
+        }
+    }
+
+    public class TextureConverter : StringConverter
+    {
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
+
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
+        {
+            // Return the list of textures here.
+            return new StandardValuesCollection(new List<string> { "Grass", "HeightMap", "Metal" });
         }
     }
 }

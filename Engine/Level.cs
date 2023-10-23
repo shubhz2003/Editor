@@ -12,7 +12,7 @@ namespace Editor.Engine
     {
         // Members
         private List<Models> m_models = new();
-        private Camera m_camera = new(new Vector3(0, 2, 2), 16 / 9);
+        private Camera m_camera = new(new Vector3(0, 0, -20), 16 / 9);
 
         // Accessors
         public Camera GetCamera() { return m_camera; }
@@ -23,10 +23,10 @@ namespace Editor.Engine
 
         public void LoadContent(ContentManager _content)
         {
-            Models model = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 1.0f);
+            Models model = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 15.0f);
             AddModel(model);
-            model = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
-            AddModel(model);
+            //model = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
+            //AddModel(model);
 		}
 
         private void HandleTranslate()
