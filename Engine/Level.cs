@@ -1,4 +1,5 @@
-﻿using Editor.Engine.Interfaces;
+﻿using Editor.Editor;
+using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -24,6 +25,7 @@ namespace Editor.Engine
         public void LoadContent(ContentManager _content)
         {
             Models model = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 15.0f);
+            model.SetShader(_content.Load<Effect>("MyShader"));
             AddModel(model);
             //model = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
             //AddModel(model);
@@ -139,6 +141,7 @@ namespace Editor.Engine
                         if (f.HasValue)
                         {
                             model.Selected = true;
+                            GameEditor.IsDirty = true;
                         }
                     }
                 }

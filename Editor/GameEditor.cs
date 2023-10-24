@@ -1,6 +1,7 @@
 ﻿using Editor.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace Editor.Editor
@@ -15,6 +16,9 @@ namespace Editor.Editor
         private FontController m_fonts; 
         RasterizerState m_rasterizerState = new RasterizerState();
         DepthStencilState m_depthStencilState = new DepthStencilState();
+
+        public static bool IsDirty { get; set; }
+
 
         public GameEditor()
         {
@@ -55,25 +59,49 @@ namespace Editor.Editor
                 Project.Update((float)(gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
                 InputController.Instance.Clear();
                 var models = Project.CurrentLevel.GetSelectedModels();
-                if (models.Count == 0)
+
+                if(IsDirty)
                 {
-                    m_parent.propertyGrid.SelectedObject = null;
+                    if (m_parent.propertyGrid.SelectedObject is Models legacyModel)
+                    {
+                        legacyModel.PropertyChanged -= Model_Property_Changed;
+                    }
+                    if (models.Count == 0)
+                    {
+                        m_parent.propertyGrid.SelectedObject = null;
+                    }
+                    else if (models.Count > 1)
+                    {
+                        m_parent.propertyGrid.SelectedObjects = models.ToArray();
+                        foreach (var model in models) 
+                        {
+                            model.PropertyChanged += Model_Property_Changed;
+                        }
+                    }
+
+                    else
+                    {
+                        m_parent.propertyGrid.SelectedObject = models[0];
+                        models[0].PropertyChanged += Model_Property_Changed;
+                    }
+
                 }
-                else if(models.Count > 1)
-                {
-                    m_parent.propertyGrid.SelectedObjects = models.ToArray();
-                }
-                else
-                {
-                    m_parent.propertyGrid.SelectedObject = models[0];
-                }
+
+                // Reset the dirty flag
+                GameEditor.IsDirty = false;
             }
             base.Update(gameTime);
         }
 
+        void Model_Property_Changed(object sender, PropertyChangedEventArgs e)
+        {
+            m_parent.propertyGrid.Refresh();
+        }
+
+
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Aquamarine);
+            GraphicsDevice.Clear(Color.Purple);
 
             if (Project != null)
             {

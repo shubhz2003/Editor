@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System.IO;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using SharpDX.Direct2D1.Effects;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Editor.Engine
 {
@@ -16,59 +14,79 @@ namespace Editor.Engine
         //Members
         private Vector3 m_position;
         private Vector3 m_rotation;
-        private Model m_mesh;
-        private Effect m_shader;
-        private float m_scale;
-        private bool m_selected;
+        private ContentManager m_content;
         private string m_diffuseTexture;
-        private bool isDirty = false;
-
 
         // Accessors
         [Browsable(false)]
-        public Model Mesh { get => m_mesh; set { m_mesh = value; OnPropertyChanged(); } }
+        public Model Mesh { get; set; }
 
         [Browsable(false)]
-        public Effect Shader { get => m_shader; set { m_shader = value; OnPropertyChanged(); } }
+        public Effect Shader { get; set; } 
+
+        [Browsable(false)]
+        public Texture Texture { get; set; }
 
         [Category("Appearance")]
         [Description("Diffuse texture of the model.")]
         [TypeConverter(typeof(TextureConverter))]
         public string DiffuseTexture
         {
-            get => m_diffuseTexture;
+            get
+            {
+                if (m_diffuseTexture == null)
+                    return "Metal";
+
+                return m_diffuseTexture;
+            }
             set
             {
-                if (m_diffuseTexture != value)
+                if (value == "HeightMap")
                 {
                     m_diffuseTexture = value;
-                    OnPropertyChanged();
-                    isDirty = true;
+
                 }
+                else if (value == "Grass")
+                {
+                    m_diffuseTexture = value;
+
+                }
+                else
+                {
+                    //Set Metal as the default texture
+                    m_diffuseTexture = "Metal";
+
+                }
+
+                Texture = m_content.Load<Texture>(m_diffuseTexture);
+                Texture.Tag = DiffuseTexture;
+                OnPropertyChanged("DiffuseTexture");
             }
         }
+
         [Category("State")]
         [Description("Selection status.")]
-        public bool Selected { get => m_selected; set { m_selected = value; OnPropertyChanged(); } }
+        public bool Selected { get; set; } = false;
 
         [Category("Transformation")]
         [Description("Position of the model in world space.")]
-        public Vector3 Position { get => m_position; set { m_position = value; OnPropertyChanged(); } }
+        public Vector3 Position { get => m_position; set { m_position = value; } }
 
         [Category("Transformation")]
         [Description("Rotation of the model.")]
-        public Vector3 Rotation { get => m_rotation; set { m_rotation = value; OnPropertyChanged(); } }
+        public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
 
         [Category("Transformation")]
         [Description("Scale of the model.")]
-        public float Scale { get => m_scale; set { m_scale = value; OnPropertyChanged(); } }
-
+        public float Scale { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
-        // Texturing
-        public Texture Texture { get; set; }
 
         public Models()
         {
@@ -81,20 +99,20 @@ namespace Editor.Engine
                       Vector3 _position,
                       float _scale)
         {
-            Create(_content, _model, _texture, _effect, _position, _scale);
+            m_content = _content;
+            Create(_content, _model, _effect, _position, _scale);
         }
 
         public void Create(ContentManager _content,
                             string _model,
-                            string _texture,
                             string _effect,
                             Vector3 _position,
                             float _scale)
         {
             Mesh = _content.Load<Model>(_model);
             Mesh.Tag = _model;
-            Texture = _content.Load<Texture>(_texture);
-            Texture.Tag = _texture;
+            Texture = _content.Load<Texture>(DiffuseTexture);
+            Texture.Tag = DiffuseTexture;
             Shader = _content.Load<Effect>(_effect);
             Shader.Tag = _effect;
             SetShader(Shader);
@@ -144,7 +162,7 @@ namespace Editor.Engine
         {
             //m_rotation.X += 0.001f;
             //m_rotation.Y += 0.005f;
-           // m_rotation.Z += 0.05f;
+            // m_rotation.Z += 0.05f;
 
             Shader.Parameters["World"].SetValue(GetTransform());
             Shader.Parameters["WorldViewProjection"].SetValue(GetTransform() * _view * _projection);
@@ -155,26 +173,6 @@ namespace Editor.Engine
             {
                 mesh.Draw();
             }
-
-        }
-
-        public bool IsDirty
-        {
-            get { return isDirty; }
-            set
-            {
-                if (isDirty != value)
-                {
-                    isDirty = value;
-                    OnPropertyChanged(nameof(IsDirty));
-                }
-            }
-        }
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            IsDirty = true;
         }
 
         public void Serialize(BinaryWriter _stream)
@@ -195,7 +193,7 @@ namespace Editor.Engine
             Position = HelpDeserialize.Vec3(_stream);
             Rotation = HelpDeserialize.Vec3(_stream);
             Scale = _stream.ReadSingle();
-            Create(_content, mesh, texture, shader, Position, Scale);
+            Create(_content, mesh, shader, Position, Scale);
         }
     }
 }
