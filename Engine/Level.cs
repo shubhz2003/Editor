@@ -12,7 +12,9 @@ namespace Editor.Engine
     {
         // Members
         private List<Models> m_models = new();
-        private Camera m_camera = new(new Vector3(0, 2, 2), 16 / 9);
+        private Camera m_camera = new(new Vector3(0, 400, 500), 16 / 9);
+        private Effect m_terrainEffect = null;
+        private Terrain m_terrain = null;
 
         // Accessors
         public Camera GetCamera() { return m_camera; }
@@ -21,12 +23,10 @@ namespace Editor.Engine
         {
         }
 
-        public void LoadContent(ContentManager _content)
+        public void LoadContent(GraphicsDevice _device, ContentManager _content)
         {
-            Models model = new(_content, "Teapot", "Metal", "MyShader", Vector3.Zero, 1.0f);
-            AddModel(model);
-            model = new(_content, "Teapot", "Metal", "MyShader", new Vector3(1, 0, 0), 1.0f);
-            AddModel(model);
+            m_terrainEffect = _content.Load<Effect>("TerrainEffect");
+            m_terrain = new(_content.Load<Texture2D>("HeightMap"), _content.Load<Texture2D>("Grass"), 200, _device);
 		}
 
         private void HandleTranslate()
@@ -127,18 +127,23 @@ namespace Editor.Engine
             InputController ic = InputController.Instance;
             if (ic.IsButtonDown(MouseButtons.Left)) 
             {
-                Ray r = ic.GetPickRay(m_camera);
+                Ray r = HelpMath.GetPickRay(ic.MousePosition, m_camera);
                 foreach (Models model in m_models)
                 {
                     model.Selected = false;
+                    Matrix transform = model.GetTransform();
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
                         BoundingSphere s = mesh.BoundingSphere;
-                        s = s.Transform(model.GetTransform());
+                        s.Transform(ref transform, out s);
                         float? f = r.Intersects(s);
                         if (f.HasValue)
                         {
-                            model.Selected = true;
+                            f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
+                            if (f.HasValue)
+                            {
+                                model.Selected = true;
+                            }
                         }
                     }
                 }
@@ -174,6 +179,7 @@ namespace Editor.Engine
             {
                 m.Render(m_camera.View, m_camera.Projection);
             }
+            m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
         }
 
         public void Serialize(BinaryWriter _stream)

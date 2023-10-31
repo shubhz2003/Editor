@@ -88,7 +88,7 @@ namespace Editor
             SaveFileDialog sfd = new();
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-                Game.Project = new(Game.Content, sfd.FileName);
+                Game.Project = new(Game.GraphicsDevice, Game.Content, sfd.FileName);
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
