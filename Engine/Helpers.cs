@@ -156,5 +156,36 @@ namespace Editor.Engine
 
             return null;
         }
+
+        public static float? PickTriangle(in Terrain terrain, ref Ray ray, ref Matrix transform)
+        {
+            Vector3 pos1 = new();
+            Vector3 pos2 = new();
+            Vector3 pos3 = new();
+
+            for (int i = 0; i < terrain.Indices.Length; i += 3)
+            {
+                int index = terrain.Indices[i];
+                pos1 = terrain.Vertices[index].Position;
+                Vector3.Transform(ref pos1, ref transform, out pos1);
+
+                index = terrain.Indices[i + 1];
+                pos2 = terrain.Vertices[index].Position;
+                Vector3.Transform(ref pos2, ref transform, out pos2);
+
+                index = terrain.Indices[i + 2];
+                pos3 = terrain.Vertices[index].Position;
+                Vector3.Transform(ref pos3, ref transform, out pos3);
+
+                RayIntersectsTriangle(ref ray, ref pos1, ref pos2, ref pos3, out float? res);
+                if (res.HasValue)
+                {
+                    return res;
+                }
+
+            }
+
+            return null;
+        }
     }
 }

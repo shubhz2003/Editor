@@ -124,19 +124,22 @@ namespace Editor.Engine
 
         private void HandlePick()
         {
+            float? f;
+            Matrix transform = Matrix.Identity;
             InputController ic = InputController.Instance;
             if (ic.IsButtonDown(MouseButtons.Left)) 
             {
                 Ray r = HelpMath.GetPickRay(ic.MousePosition, m_camera);
+                // Check Models
                 foreach (Models model in m_models)
                 {
                     model.Selected = false;
-                    Matrix transform = model.GetTransform();
+                    transform = model.GetTransform();
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
                         BoundingSphere s = mesh.BoundingSphere;
                         s.Transform(ref transform, out s);
-                        float? f = r.Intersects(s);
+                        f = r.Intersects(s);
                         if (f.HasValue)
                         {
                             f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
@@ -146,6 +149,15 @@ namespace Editor.Engine
                             }
                         }
                     }
+                }
+
+                // Check Terrain
+                transform = Matrix.Identity;
+                f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
+                m_terrain.Selected = false;
+                if (f.HasValue) 
+                {
+                    m_terrain.Selected = true;
                 }
             }
         }
@@ -163,13 +175,15 @@ namespace Editor.Engine
             m_models.Add(_model);
         }
 
-        public List<Models> GetSelectedModels()
+        public List<ISelectable> GetSelectedModels()
         {
-            List<Models> models = new List<Models>();
+            List<ISelectable> models = new();
             foreach (var model in m_models) 
             {
                 if (model.Selected) models.Add(model);
             }
+            if (m_terrain.Selected) models.Add(m_terrain);
+
             return models;
         }
 
@@ -179,6 +193,7 @@ namespace Editor.Engine
             {
                 m.Render(m_camera.View, m_camera.Projection);
             }
+
             m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
         }
 

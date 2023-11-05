@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Editor.Engine
 {
-    class Models : ISerializable
+    class Models : ISerializable, ISelectable
     {
         //Members
         private Vector3 m_position;
@@ -14,14 +14,12 @@ namespace Editor.Engine
 
         // Accessors
         public Model Mesh { get; set; }
+        public Texture Texture { get; set; }
         public Effect Shader { get; set; }
         public Vector3 Position { get => m_position; set { m_position = value; } }
         public Vector3 Rotation { get => m_rotation; set { m_rotation = value; } }
         public float Scale { get; set; }
         public bool Selected {  get; set; } = false;
-
-        // Texturing
-        public Texture Texture { get; set; }
 
         public Models()
         {
