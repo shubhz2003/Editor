@@ -94,6 +94,7 @@ namespace Editor
             {
                 Game.Project = new(Game.GraphicsDevice, Game.Content, sfd.FileName);
                 Game.Project.OnAssetsUpdated += Project_OnAssetsUpdated;
+                Game.Project.AssetMonitor.UpdateAssetDB();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
@@ -107,9 +108,18 @@ namespace Editor
                 listBoxAssets.Items.Clear();
                 var assets = Game.Project.AssetMonitor.Assets;
                 if (!assets.ContainsKey(AssetTypes.MODEL)) return;
-                foreach (string asset in assets[AssetTypes.MODEL])
+                foreach (AssetTypes assetType in Enum.GetValues(typeof(AssetTypes)))
                 {
-                    listBoxAssets.Items.Add(asset);
+                    if (assets.ContainsKey(assetType))
+                    {
+                        listBoxAssets.Items.Add(assetType.ToString().ToUpper() + "S:");
+                        foreach (string asset in assets[assetType]) 
+                        {
+                            listBoxAssets.Items.Add(asset);
+                        }
+                        listBoxAssets.Items.Add(" ");
+                    }
+                    
                 }
             });
         }
