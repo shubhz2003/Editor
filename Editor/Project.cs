@@ -2,6 +2,7 @@
 using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -9,11 +10,16 @@ namespace Editor.Editor
 {
     internal class Project : ISerializable
     {
+        public event AssetsUpdated OnAssetsUpdated;
+
         public Level CurrentLevel { get; set; } = null;
         public List<Level> Levels { get; set; } = new();
         public string Folder { get; set; } = string.Empty;
+        public string ContentFolder { get; private set; } = string.Empty;
+        public string AssetFolder { get; private set; } = string.Empty;
+        public string ObjectFolder { get; private set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-
+        public AssetMonitor AssetMonitor { get; private set; } = null;
         public Project() { }
 
         public Project(GraphicsDevice _device ,ContentManager _content, string _name)
@@ -25,10 +31,29 @@ namespace Editor.Editor
                 Name += ".oce";
             }
 
+            // Create Content Folder for assets, and copy the mgcb template
+            ContentFolder = Path.Combine(Folder, "Content");
+            AssetFolder = Path.Combine(ContentFolder, "bin");
+            ObjectFolder = Path.Combine(ContentFolder, "obj");
+            char d = Path.DirectorySeparatorChar;
+            if (!Directory.Exists(ContentFolder))
+            {
+                Directory.CreateDirectory(ContentFolder);
+                Directory.CreateDirectory(AssetFolder);
+                Directory.CreateDirectory(ObjectFolder);
+                File.Copy($"ContentTemplate.mgcb", ContentFolder + $"{d}Content.mgcb");
+
+            }
+            AssetMonitor = new(ObjectFolder);
+            AssetMonitor.OnAssetsUpdated += AssetMon_OnAssetsUpdated;
+
             // Add a default level
             AddLevel(_device, _content);
         }
-
+        private void AssetMon_OnAssetsUpdated()
+        {
+            OnAssetsUpdated?.Invoke();
+        }
         public void AddLevel(GraphicsDevice _device, ContentManager _content)
         {
             CurrentLevel = new();
