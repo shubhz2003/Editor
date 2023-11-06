@@ -1,5 +1,6 @@
 ﻿using Editor.Editor;
 using Editor.Engine;
+using Editor.GUI;
 using Microsoft.Xna.Framework;
 using System;
 using System.Configuration;
@@ -112,17 +113,30 @@ namespace Editor
                 {
                     if (assets.ContainsKey(assetType))
                     {
-                        listBoxAssets.Items.Add(assetType.ToString().ToUpper() + "S:");
-                        foreach (string asset in assets[assetType]) 
+                        listBoxAssets.Items.Add(new ListItemAsset()
                         {
-                            listBoxAssets.Items.Add(asset);
+                            Name = assetType.ToString().ToUpper() + "S:",
+                            Type = AssetTypes.NONE
+                        });
+                        foreach (string asset in assets[assetType])
+                        {
+                            ListItemAsset lia = new()
+                            {
+                                Name = asset,
+                                Type = assetType
+                            };
+                            listBoxAssets.Items.Add(lia);
                         }
-                        listBoxAssets.Items.Add(" ");
+                        listBoxAssets.Items.Add(new ListItemAsset()
+                        {
+                            Name = " ",
+                            Type = AssetTypes.NONE
+                        });
                     }
-                    
                 }
             });
         }
+
 
         private void FormEditor_Load(object sender, EventArgs e)
         {
