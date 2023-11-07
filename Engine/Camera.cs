@@ -1,4 +1,5 @@
-﻿using Editor.Engine;
+﻿using Editor.Editor;
+using Editor.Engine;
 using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -82,7 +83,7 @@ namespace Editor.Engine
             _stream.Write(AspectRatio);
         }
 
-        public void Deserialize(BinaryReader _stream, ContentManager _content)
+        public void Deserialize(BinaryReader _stream, GameEditor _game)
         {
             // Reads the buffer
             // Gets our numbers can converts into vectors to get position
