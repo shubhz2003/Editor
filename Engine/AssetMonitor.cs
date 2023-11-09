@@ -41,8 +41,9 @@ namespace Editor.Engine
         {
             bool updated = false;
             AssetTypes assetType = AssetTypes.MODEL;
-            using var inStream = new FileStream(m_metaInfo, FileMode.Open,
-                FileAccess.Read, FileShare.ReadWrite);
+            if (!File.Exists(m_metaInfo)) return;
+                using var inStream = new FileStream(m_metaInfo, FileMode.Open,
+                    FileAccess.Read, FileShare.ReadWrite);
             using var streamReader = new StreamReader(inStream);
             string[] content = streamReader.ReadToEnd().Split(Environment.NewLine);
             foreach (string line in content) 
