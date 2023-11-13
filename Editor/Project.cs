@@ -1,8 +1,5 @@
 ﻿using Editor.Engine;
 using Editor.Engine.Interfaces;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -20,18 +17,17 @@ namespace Editor.Editor
         public string ObjectFolder { get; private set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public AssetMonitor AssetMonitor { get; private set; } = null;
-        public Project() { }
 
-        public Project(GraphicsDevice _device ,ContentManager _content, string _name)
+        public Project() { }
+        public Project(GameEditor game, string name)
         {
-            Folder = Path.GetDirectoryName(_name);
-            Name = Path.GetFileName(_name);
+            Folder = Path.GetDirectoryName(name);
+            Name = Path.GetFileName(name);
             if (!Name.ToLower().EndsWith(".oce"))
             {
                 Name += ".oce";
             }
-
-            // Create Content Folder for assets, and copy the mgcb template
+            // Create Content folder for assets, and copy the mgcb template
             ContentFolder = Path.Combine(Folder, "Content");
             AssetFolder = Path.Combine(ContentFolder, "bin");
             ObjectFolder = Path.Combine(ContentFolder, "obj");
@@ -42,28 +38,28 @@ namespace Editor.Editor
                 Directory.CreateDirectory(AssetFolder);
                 Directory.CreateDirectory(ObjectFolder);
                 File.Copy($"ContentTemplate.mgcb", ContentFolder + $"{d}Content.mgcb");
-
             }
             AssetMonitor = new(ObjectFolder);
             AssetMonitor.OnAssetsUpdated += AssetMon_OnAssetsUpdated;
-
             // Add a default level
-            AddLevel(_device, _content);
+            AddLevel(game);
         }
+
         private void AssetMon_OnAssetsUpdated()
         {
             OnAssetsUpdated?.Invoke();
         }
-        public void AddLevel(GraphicsDevice _device, ContentManager _content)
+
+        public void AddLevel(GameEditor game)
         {
             CurrentLevel = new();
-            CurrentLevel.LoadContent(_device, _content);
+            CurrentLevel.LoadContent(game);
             Levels.Add(CurrentLevel);
         }
 
-        public void Update(float _delta)
+        public void Update(float delta)
         {
-            CurrentLevel?.Update(_delta);
+            CurrentLevel?.Update(delta);
         }
 
         public void Render()
@@ -71,32 +67,32 @@ namespace Editor.Editor
             CurrentLevel.Render();
         }
 
-        public void Serialize(BinaryWriter _stream)
+        public void Serialize(BinaryWriter stream)
         {
-            _stream.Write(Levels.Count);
+            stream.Write(Levels.Count);
             int clIndex = Levels.IndexOf(CurrentLevel);
-            foreach (var level in Levels)
+            foreach (Level level in Levels)
             {
-                level.Serialize(_stream);
+                level.Serialize(stream);
             }
-            _stream.Write(clIndex);
-            _stream.Write(Folder);
-            _stream.Write(Name);
+            stream.Write(clIndex);
+            stream.Write(Folder);
+            stream.Write(Name);
         }
 
-        public void Deserialize(BinaryReader _stream, GameEditor _game)
+        public void Deserialize(BinaryReader stream, GameEditor game)
         {
-            int levelCount = _stream.ReadInt32();
-            for (int count  = 0; count < levelCount; count++) 
+            int levelCount = stream.ReadInt32();
+            for (int count = 0; count < levelCount; count++)
             {
-                Level l = new();
-                l.Deserialize(_stream, _game);
-                Levels.Add(l);
+                Level level = new Level();
+                level.Deserialize(stream, game);
+                Levels.Add(level);
             }
-            int clIndex = _stream.ReadInt32();
+            int clIndex = stream.ReadInt32();
             CurrentLevel = Levels[clIndex];
-            Folder = _stream.ReadString();
-            Name = _stream.ReadString();
+            Folder = stream.ReadString();
+            Name = stream.ReadString();
         }
     }
 }

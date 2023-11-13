@@ -1,43 +1,47 @@
-﻿using Editor.Engine;
+﻿using Editor.Editor;
+using Editor.Engine;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Windows.Forms;
 
-namespace Editor.Editor
+namespace Editor
 {
     public class GameEditor : Game
     {
         internal Project Project { get; set; }
         internal Texture DefaultTexture { get; set; }
+        internal Texture2D DefaultGrass { get; set; }
+        internal Texture2D DefaultHeightMap { get; set; }
         internal Effect DefaultEffect { get; set; }
 
-        private GraphicsDeviceManager m_graphics;
-        private FormEditor m_parent;
-        private SpriteBatch m_spriteBatch;
-        private FontController m_fonts; 
-        RasterizerState m_rasterizerState = new RasterizerState();
-        DepthStencilState m_depthStencilState = new DepthStencilState();
+        private GraphicsDeviceManager _graphics;
+        private FormEditor _formEditor;
+        private SpriteBatch _spriteBatch;
+        private FontController _fonts;
+        RasterizerState _rasterizerState = new RasterizerState();
+        DepthStencilState _depthStencilState = new DepthStencilState();
 
         public GameEditor()
         {
-            m_graphics = new GraphicsDeviceManager(this);
+            _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-            m_rasterizerState = new RasterizerState();
-            m_rasterizerState.CullMode = CullMode.None;
-            m_depthStencilState = new DepthStencilState();
-            m_depthStencilState.DepthBufferEnable = true;
+            _rasterizerState = new RasterizerState();
+            _rasterizerState.CullMode = CullMode.None;
+            _depthStencilState = new DepthStencilState();
+            _depthStencilState.DepthBufferWriteEnable = true;
         }
 
-        public GameEditor(FormEditor _parent) : this()
+        public GameEditor(FormEditor formEditor) : this()
         {
-            m_parent = _parent;
+            _formEditor = formEditor;
             Form gameForm = Control.FromHandle(Window.Handle) as Form;
             gameForm.TopLevel = false;
             gameForm.Dock = DockStyle.Fill;
             gameForm.FormBorderStyle = FormBorderStyle.None;
-            m_parent.splitContainer.Panel1.Controls.Add(gameForm);
+            formEditor.splitContainer.Panel1.Controls.Add(gameForm);
         }
+
         protected override void Initialize()
         {
             base.Initialize();
@@ -45,12 +49,33 @@ namespace Editor.Editor
 
         protected override void LoadContent()
         {
-            m_spriteBatch = new (GraphicsDevice);
-            // Load editor default content
-            m_fonts = new();
-            m_fonts.LoadContent(Content);
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            _fonts = new();
+            _fonts.LoadContent(Content);
             DefaultTexture = Content.Load<Texture>("DefaultTexture");
+            DefaultGrass = Content.Load<Texture2D>("DefaultGrass");
+            DefaultHeightMap = Content.Load<Texture2D>("DefaultHeightMap");
             DefaultEffect = Content.Load<Effect>("DefaultShader");
+        }
+
+        public void AdjustAspectRatio()
+        {
+            if (Project == null) return;
+            Camera camera = Project.CurrentLevel.GetCamera();
+            camera.Viewport = _graphics.GraphicsDevice.Viewport;
+            camera.Update(camera.Position, _graphics.GraphicsDevice.Viewport.AspectRatio);
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (Project != null)
+            {
+                Content.RootDirectory = Project.ContentFolder + "\\bin";
+                Project?.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                InputController.Instance.Clear();
+                UpdateSelected();
+            }
+            base.Update(gameTime);
         }
 
         private void UpdateSelected()
@@ -60,57 +85,33 @@ namespace Editor.Editor
                 var models = Project.CurrentLevel.GetSelectedModels();
                 if (models.Count == 0)
                 {
-                    m_parent.propertyGrid.SelectedObject = null;
+                    _formEditor.propertyGrid.SelectedObject = null;
                 }
                 else if (models.Count > 1)
                 {
-                    m_parent.propertyGrid.SelectedObjects = models.ToArray();
+                    _formEditor.propertyGrid.SelectedObject = models.ToArray();
                 }
                 else
                 {
-                    m_parent.propertyGrid.SelectedObject = models[0];
+                    _formEditor.propertyGrid.SelectedObject = models[0];
                 }
             }
             Models.SelectedDirty = false;
         }
 
-        protected override void Update(GameTime gameTime)
-        {
-            if (Project != null)
-            {
-                Content.RootDirectory = Project.ContentFolder + "\\bin";
-                Project.Update((float)(gameTime.ElapsedGameTime.TotalMilliseconds / 1000));
-                InputController.Instance.Clear();
-                UpdateSelected();
-            }
-            base.Update(gameTime);
-        }
-
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Aquamarine);
-
-            if (Project != null)
-            {
-                GraphicsDevice.RasterizerState = m_rasterizerState;
-                GraphicsDevice.DepthStencilState = m_depthStencilState;
-
-				Project.Render();
-                m_spriteBatch.Begin();
-                m_fonts.Draw(m_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);
-				m_fonts.Draw(m_spriteBatch, 16, Project.CurrentLevel.ToString(), new Vector2(20, 80), Color.Yellow);
-				m_spriteBatch.End();
-            }
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            if (Project == null) return;
+            GraphicsDevice.RasterizerState = _rasterizerState;
+            GraphicsDevice.DepthStencilState = _depthStencilState;
+            Project?.Render();
+            _spriteBatch.Begin();
+            _fonts.Draw(_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);
+            _fonts.Draw(_spriteBatch, 16, Project.CurrentLevel.ToString(), new Vector2(20, 80), Color.Yellow);
+            _spriteBatch.End();
 
             base.Draw(gameTime);
-        }
-
-        public void AdjustAspectRatio()
-        {
-            if (Project == null) return;
-            Camera cam = Project.CurrentLevel.GetCamera();
-            cam.Viewport = m_graphics.GraphicsDevice.Viewport;
-            cam.Update(cam.Position, m_graphics.GraphicsDevice.Viewport.AspectRatio);
         }
     }
 }

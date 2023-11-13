@@ -1,41 +1,56 @@
 ﻿using Editor.Engine.Interfaces;
+using Editor.Engine.Lights;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
-using Editor.Editor;
 
 namespace Editor.Engine
 {
-    internal class Level
+    internal class Level : ISerializable
     {
+        // Property
+        public Camera GetCamera() { return _camera; }
         // Members
-        private List<Models> m_models = new();
-        private Camera m_camera = new(new Vector3(0, 400, 500), 16 / 9);
-        private Effect m_terrainEffect = null;
-        private Terrain m_terrain = null;
+        private List<Models> _models = new();
+        private Camera _camera = new(new Vector3(0, 400, 500), 16 / 9);
+        private Light _light = new Light() { Position = new(0, 400, -500), Color = new(0.9f, 0.9f, 0.9f) };
+        private Effect terrainEffect = null;
+        private Terrain terrain = null;
 
-        // Accessors
-        public Camera GetCamera() { return m_camera; }
 
-        public Level()
+        public Level() { }
+
+        public void LoadContent(GameEditor game)
         {
+            terrain = new(game.DefaultEffect, game.DefaultHeightMap, game.DefaultGrass, 200, game.GraphicsDevice);
         }
 
-        public void LoadContent(GraphicsDevice _device, ContentManager _content)
+        public void AddModel(Models model)
         {
-            //m_terrainEffect = _content.Load<Effect>("TerrainEffect");
-            //m_terrain = new(_content.Load<Texture2D>("HeightMap"), _content.Load<Texture2D>("Grass"), 200, _device);
-		}
+            _models.Add(model);
+        }
 
-        private void HandleTranslate()
+        public List<ISelectable> GetSelectedModels()
+        {
+            List<ISelectable> models = new List<ISelectable>();
+            foreach (var model in _models)
+            {
+                if (model.Selected) models.Add(model);
+            }
+            if (terrain != null && terrain.Selected) models.Add(terrain);
+
+            return models;
+        }
+
+        public void HandleTranslate()
         {
             InputController ic = InputController.Instance;
             Vector3 translate = Vector3.Zero;
             if (ic.IsKeyDown(Keys.Left)) translate.X += -10;
-            if (ic.IsKeyDown(Keys.Right)) translate.X += 10;
+            if (ic.IsKeyDown(Keys.Right)) translate.X += +10;
+
             if (ic.IsKeyDown(Keys.Menu))
             {
                 if (ic.IsKeyDown(Keys.Up)) translate.Z += 1;
@@ -46,12 +61,14 @@ namespace Editor.Engine
                 if (ic.IsKeyDown(Keys.Up)) translate.Y += 10;
                 if (ic.IsKeyDown(Keys.Down)) translate.Y += -10;
             }
+
             if (ic.IsButtonDown(MouseButtons.Middle))
             {
-                Vector2 dir = ic.MousePosition - ic.LastPositon;
+                Vector2 dir = ic.MousePosition - ic.LastPosition;
                 translate.X = dir.X;
                 translate.Y = -dir.Y;
             }
+
             if (ic.GetWheel() != 0)
             {
                 translate.Z = ic.GetWheel() * 2;
@@ -60,59 +77,57 @@ namespace Editor.Engine
             if (translate != Vector3.Zero)
             {
                 bool modelTranslated = false;
-                foreach (Models model in m_models)
+                foreach (Models model in _models)
                 {
                     if (model.Selected)
                     {
                         modelTranslated = true;
-                        model.Translate(translate / 1000, m_camera);
+                        model.Translate(translate / 1000, _camera);
                     }
                 }
-                if (!modelTranslated) 
+                if (!modelTranslated)
                 {
-                    m_camera.Translate(translate * 0.001f);
+                    _camera.Translate(translate * 0.001f);
                 }
             }
         }
 
-        private void HandleRotate(float _delta) 
+        public void HandleRotate(float delta)
         {
             InputController ic = InputController.Instance;
-            if ((ic.IsButtonDown(MouseButtons.Right)) &&
-                (!ic.IsKeyDown(Keys.Menu)))
+            if (ic.IsButtonDown(MouseButtons.Right) && (!ic.IsKeyDown(Keys.Menu)))
             {
-                Vector2 dir = ic.MousePosition - ic.LastPositon;
+                Vector2 dir = ic.MousePosition - ic.LastPosition;
                 if (dir != Vector2.Zero)
                 {
-                    Vector3 movement = new Vector3(dir.Y, dir.X, 0) * _delta;
-                    bool modelRotated = false;
-                    foreach (Models model in m_models) 
+                    Vector3 movement = new Vector3(dir.Y, dir.X, 0) * delta;
+                    bool modelRoated = false;
+                    foreach (Models model in _models)
                     {
                         if (model.Selected)
                         {
-                            modelRotated = true;
+                            modelRoated = true;
                             model.Rotation += movement;
                         }
                     }
-                    if (!modelRotated) 
+                    if (!modelRoated)
                     {
-                        m_camera.Rotate(movement);
+                        _camera.Rotate(movement);
                     }
                 }
             }
         }
 
-        private void HandleScale(float _delta) 
+        private void HandleScale(float delta)
         {
             InputController ic = InputController.Instance;
-            if ((ic.IsButtonDown(MouseButtons.Right)) &&
-                (!ic.IsKeyDown(Keys.Menu)))
+            if (ic.IsButtonDown(MouseButtons.Right) && ic.IsKeyDown(Keys.Menu))
             {
-                float l = ic.MousePosition.X - ic.LastPositon.X;
+                float l = ic.MousePosition.X - ic.LastPosition.X;
                 if (l != 0)
                 {
-                    l *= _delta;
-                    foreach (Models model in m_models)
+                    l += delta;
+                    foreach (Models model in _models)
                     {
                         if (model.Selected)
                         {
@@ -123,18 +138,18 @@ namespace Editor.Engine
             }
         }
 
-        private void HandlePick()
+        internal ISelectable HandlePick(bool selected = true)
         {
             float? f;
             Matrix transform = Matrix.Identity;
             InputController ic = InputController.Instance;
-            if (ic.IsButtonDown(MouseButtons.Left)) 
+            if (ic.IsButtonDown(MouseButtons.Left) || !selected)
             {
-                Ray r = HelpMath.GetPickRay(ic.MousePosition, m_camera);
-                // Check Models
-                foreach (Models model in m_models)
+                Ray r = HelpMath.GetPickRay(ic.MousePosition, _camera);
+                // Check for Models
+                foreach (Models model in _models)
                 {
-                    model.Selected = false;
+                    if (selected) model.Selected = false;
                     transform = model.GetTransform();
                     foreach (ModelMesh mesh in model.Mesh.Meshes)
                     {
@@ -146,102 +161,84 @@ namespace Editor.Engine
                             f = HelpMath.PickTriangle(in mesh, ref r, ref transform);
                             if (f.HasValue)
                             {
+                                if (!selected) return model;
                                 model.Selected = true;
                             }
                         }
                     }
                 }
-
-                // Check Terrain
-                if (m_terrain != null)
+                // Check for Terrain
+                if (terrain != null)
                 {
                     transform = Matrix.Identity;
-                    f = HelpMath.PickTriangle(in m_terrain, ref r, ref transform);
-                    m_terrain.Selected = false;
+                    f = HelpMath.PickTriangle(in terrain, ref r, ref transform);
+                    terrain.Selected = false;
                     if (f.HasValue)
                     {
-                        m_terrain.Selected = true;
+                        if (!selected) return terrain;
+                        terrain.Selected = true;
                     }
                 }
-
             }
+            return null;
         }
 
-        public void Update(float _delta)
+        public void Update(float delta)
         {
             HandleTranslate();
-            HandleRotate(_delta);
-            HandleScale(_delta);
+            HandleRotate(delta);
+            HandleScale(delta);
             HandlePick();
-		}
-
-        public void AddModel(Models _model)
-        {
-            m_models.Add(_model);
-        }
-
-        public List<ISelectable> GetSelectedModels()
-        {
-            List<ISelectable> models = new();
-            foreach (var model in m_models) 
-            {
-                if (model.Selected) models.Add(model);
-            }
-            if (m_terrainEffect != null) 
-            {
-                if (m_terrain.Selected) models.Add(m_terrain);
-            }
-
-            return models;
         }
 
         public void Render()
         {
-            foreach (Models m in m_models)
+            Renderer r = Renderer.Instance;
+            r.Camera = _camera;
+            r.Light = _light;
+            foreach (Models model in _models)
             {
-                m.Render(m_camera.View, m_camera.Projection);
+                r.Render(model);
             }
-            if (m_terrain != null) 
+            if (terrain != null)
             {
-                m_terrain.Draw(m_terrainEffect, m_camera.View, m_camera.Projection);
+                r.Render(terrain);
             }
         }
 
-        public void Serialize(BinaryWriter _stream)
+        public void Serialize(BinaryWriter stream)
         {
-            _stream.Write(m_models.Count);
-            foreach (var model in m_models)
+            stream.Write(_models.Count);
+            foreach (Models model in _models)
             {
-                model.Serialize(_stream);
+                model.Serialize(stream);
             }
-            m_camera.Serialize(_stream);
-
+            _camera.Serialize(stream);
         }
 
-        public void Deserialize(BinaryReader _stream, GameEditor _game)
+        public void Deserialize(BinaryReader stream, GameEditor game)
         {
-            int modelCount = _stream.ReadInt32();
-            for (int count  = 0; count < modelCount; count++)
+            int modelCount = stream.ReadInt32();
+            for (int count = 0; count < modelCount; count++)
             {
-                Models m = new();
-                m.Deserialize(_stream, _game);
-                m_models.Add(m);
+                Models model = new Models();
+                model.Deserialize(stream, game);
+                _models.Add(model);
             }
-            m_camera.Deserialize(_stream, _game);
+            _camera.Deserialize(stream, game);
         }
 
-		public override string ToString()
-		{
+        public override string ToString()
+        {
             string s = string.Empty;
-            foreach (Models model in m_models) 
+            foreach (Models model in _models)
             {
                 if (model.Selected)
                 {
-                    s += "\nModel: Pos: " + model.Position.ToString() +
-                        "   Rot:    " + model.Rotation.ToString();
+                    s += "\nModel: Pos: " + model.Position.ToString() + " Rot: " + model.Rotation.ToString();
                 }
             }
-		    return m_camera.ToString() + s;
-		}
-	}
+            return _camera.ToString() + s;
+        }
+    }
 }

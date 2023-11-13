@@ -182,9 +182,7 @@ namespace Editor.Engine
                 {
                     return res;
                 }
-
             }
-
             return null;
         }
     }

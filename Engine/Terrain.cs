@@ -1,12 +1,10 @@
 ﻿using Editor.Engine.Interfaces;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.ComponentModel.Design;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Editor.Engine
 {
-    internal class Terrain: ISelectable
+    internal class Terrain : ISelectable, IRenderable
     {
         public VertexPositionNormalTexture[] Vertices { get; set; } // Vertex array
         public VertexBuffer VertexBuffer { get; set; } // Vertex Buffer
@@ -21,13 +19,19 @@ namespace Editor.Engine
         public GraphicsDevice Device { get; set; } // The graphicsdevice for rendering
         public Vector3 LightDirection { get; set; } // Direction light is emanating from
         public Texture2D HeightMap { get; set; } // Heightmap texture
-        public Texture2D BaseTexture { get; set; } // The terrain difuse texture
-        public bool Selected { get; set; } = false;
+        public Material Material { get; private set; }
+        public bool Selected { get; set; }
 
-        public Terrain(Texture2D heightMap, Texture2D baseTexture, int height, GraphicsDevice device)
+        public Vector3 Position { get; set; } = Vector3.Zero;
+        public Vector3 Rotation { get; set; } = Vector3.Zero;
+        public float Scale { get; set; } = 1.0f;
+
+        public Terrain(Effect effect, Texture2D heightMap, Texture2D baseTexture, int height, GraphicsDevice device)
         {
+            Material = new Material();
             HeightMap = heightMap;
-            BaseTexture = baseTexture;
+            Material.Diffuse = baseTexture;
+            Material.Effect = effect;
             Device = device;
             Width = heightMap.Width;
             Length = heightMap.Height;
@@ -49,31 +53,29 @@ namespace Editor.Engine
 
         private void GetHeights()
         {
-            //Extract pixel data
+            // Extract pixel data
             Color[] heightMapData = new Color[HeightMap.Width * HeightMap.Height];
             HeightMap.GetData<Color>(heightMapData);
-            //Create heights[,] array
+            // Create heuights[,] array
             Heights = new float[Width, Length];
             // For each pixel
             for (int y = 0; y < Length; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    //Get color value( 0 - 255)
+                    // Get color value (0 - 255)
                     float amt = heightMapData[y * Width + x].R;
-                    //Scale to (0 - 1)
+                    // Scale to (0 - 1)
                     amt /= 255.0f;
-                    //Multiply by max height to get final height
+                    // Multiply by max height to get final height\
                     Heights[x, y] = amt * Height;
                 }
             }
-
         }
 
         private void CreateVertices()
         {
-            VertexBuffer = new VertexBuffer(Device, typeof(VertexPositionNormalTexture),
-                                            VertexCount, BufferUsage.WriteOnly);
+            VertexBuffer = new VertexBuffer(Device, typeof(VertexPositionNormalTexture), VertexCount, BufferUsage.WriteOnly);
 
             Vertices = new VertexPositionNormalTexture[VertexCount];
             for (int y = 0; y < Length; y++)
@@ -91,8 +93,7 @@ namespace Editor.Engine
 
         private void CreateIndices()
         {
-            IndexBuffer = new IndexBuffer(Device, IndexElementSize.ThirtyTwoBits,
-                                          IndexCount, BufferUsage.WriteOnly);
+            IndexBuffer = new IndexBuffer(Device, IndexElementSize.ThirtyTwoBits, IndexCount, BufferUsage.WriteOnly);
 
             Indices = new int[IndexCount];
             int i = 0;
@@ -101,17 +102,17 @@ namespace Editor.Engine
             {
                 for (int x = 0; x < Width - 1; x++)
                 {
-                    //Find the indices of the corners
+                    // Find the indices of the corners
                     int upperLeft = y * Width + x;
                     int upperRight = upperLeft + 1;
-                    int lowerLeft = upperLeft + Width;
-                    int lowerRight = lowerLeft + 1;
-                    //Specify upper triangle
+                    int lowerleft = upperLeft + Width;
+                    int lowerRight = lowerleft + 1;
+                    // Specify upper triangle
                     Indices[i++] = upperLeft;
                     Indices[i++] = upperRight;
-                    Indices[i++] = lowerLeft;
+                    Indices[i++] = lowerleft;
                     // Specify lower triangle
-                    Indices[i++] = lowerLeft;
+                    Indices[i++] = lowerleft;
                     Indices[i++] = upperRight;
                     Indices[i++] = lowerRight;
                 }
@@ -120,14 +121,14 @@ namespace Editor.Engine
 
         private void GenNormals()
         {
-            //For each triangle
+            // For each triangle
             for (int i = 0; i < IndexCount; i += 3)
             {
-                //Find the position of each corner of the triangle
+                // Find the position of each corner of the triangle
                 Vector3 v1 = Vertices[Indices[i]].Position;
                 Vector3 v2 = Vertices[Indices[i + 1]].Position;
                 Vector3 v3 = Vertices[Indices[i + 2]].Position;
-                // Cross the vector between the corners to get the normal
+                // Cross the vectors bertween the cordners to get the normal
                 Vector3 normal = Vector3.Cross(v1 - v3, v1 - v2);
                 normal.Normalize();
                 // Add the influence of the normal to each vertex in the triangle
@@ -135,33 +136,66 @@ namespace Editor.Engine
                 Vertices[Indices[i + 1]].Normal += normal;
                 Vertices[Indices[i + 2]].Normal += normal;
             }
-            // Average the influence of the triangles touching each vertex
+            // Average the influences of the triangles touching each vertex
             for (int i = 0; i < VertexCount; i++)
             {
                 Vertices[i].Normal.Normalize();
             }
         }
 
-        public void Draw(Effect effect, Matrix view, Matrix projection)
+        public Matrix GetTransform()
         {
-            effect.Parameters["View"].SetValue(view);
-            effect.Parameters["Projection"].SetValue(projection);
-            effect.Parameters["BaseTexture"].SetValue(BaseTexture);
-            effect.Parameters["TextureTiling"].SetValue(15.0f);
-            effect.Parameters["LightDirection"].SetValue(LightDirection);
-            effect.Parameters["Tint"].SetValue(Selected);
+            return Matrix.CreateScale(Scale) * Matrix.CreateFromYawPitchRoll(Rotation.Y, Rotation.X, Rotation.Z) * Matrix.CreateTranslation(Position);
+        }
+
+        public void Render()
+        {
+            /*
+            Material.Effect.Parameters["World"]?.SetValue(Matrix.Identity);
+            Material.Effect.Parameters["WorldViewProjection"]?.SetValue(Matrix.Identity * camera.View * camera.Projection);
+            Material.Effect.Parameters["CameraPosition"]?.SetValue(camera.Position);
+            Material.Effect.Parameters["View"]?.SetValue(camera.View);
+            Material.Effect.Parameters["Projection"]?.SetValue(camera.Projection);
+            Material.Effect.Parameters["TextureTiling"]?.SetValue(15.0f);
+            Material.Effect.Parameters["LightDirection"]?.SetValue(LightDirection);
+            Material.Effect.Parameters["Texture"]?.SetValue(Material.Diffuse);
+            Material.Effect.Parameters["Tint"]?.SetValue(Selected);
+            */
 
             Device.SetVertexBuffer(VertexBuffer);
             Device.Indices = IndexBuffer;
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            foreach (EffectPass pass in Material.Effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 Device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, IndexCount / 3);
-
             }
-
         }
 
+        public void SetTexture(GameEditor game, string texture)
+        {
+            if (texture == "DefaultTexture")
+            {
+                Material.Diffuse = game.DefaultTexture;
+            }
+            else
+            {
+                Material.Diffuse = game.Content.Load<Texture>(texture);
+            }
+            Material.Diffuse.Tag = texture;
+        }
+
+        public void SetShader(GameEditor game, string shader)
+        {
+            if (shader == "DefaultEffect")
+            {
+                Material.Effect = game.DefaultEffect;
+            }
+            else
+            {
+                Material.Effect = game.Content.Load<Effect>(shader);
+            }
+            Material.Effect.Tag = shader;
+        }
     }
 }

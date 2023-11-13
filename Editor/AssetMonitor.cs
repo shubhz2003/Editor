@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
-namespace Editor.Engine
+namespace Editor.Editor
 {
     public delegate void AssetsUpdated();
 
@@ -15,58 +15,58 @@ namespace Editor.Engine
         FONT,
         AUDIO,
         EFFECT
-    };
+    }
 
     internal class AssetMonitor
     {
         public event AssetsUpdated OnAssetsUpdated;
 
-        private readonly FileSystemWatcher m_watcher = null;
-        public Dictionary<AssetTypes, List<string>> Assets { get; private set; } = new();
-        private readonly string m_metaInfo = string.Empty;
+        private readonly FileSystemWatcher _watcher = null;
+        public Dictionary<AssetTypes, List<String>> Assets { get; private set; } = new();
+        private readonly string _metaInfo = string.Empty;
 
-        internal AssetMonitor(string _object)
+        internal AssetMonitor(string asset)
         {
-            m_metaInfo = Path.Combine(_object, ".mgstats");
-            m_watcher = new FileSystemWatcher(_object);
-            m_watcher.Changed += OnChanged;
-            m_watcher.Created += OnCreated;
-            m_watcher.Deleted += OnDeleted;
-            m_watcher.Filter = "*.mgstats";
-            m_watcher.IncludeSubdirectories = false;
-            m_watcher.EnableRaisingEvents = true;
+            _metaInfo = Path.Combine(asset, ".mgstats");
+            _watcher = new FileSystemWatcher(asset);
+            _watcher.Changed += OnChanged;
+            _watcher.Created += OnCreated;
+            _watcher.Deleted += OnDeleted;
+            _watcher.Filter = "*.mgstats";
+            _watcher.IncludeSubdirectories = false;
+            _watcher.EnableRaisingEvents = true;
         }
-        
+
         public void UpdateAssetDB()
         {
             bool updated = false;
             AssetTypes assetType = AssetTypes.MODEL;
-            if (!File.Exists(m_metaInfo)) return;
-                using var inStream = new FileStream(m_metaInfo, FileMode.Open,
-                    FileAccess.Read, FileShare.ReadWrite);
+            if (!File.Exists(_metaInfo)) return;
+            using var inStream = new FileStream(_metaInfo, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var streamReader = new StreamReader(inStream);
             string[] content = streamReader.ReadToEnd().Split(Environment.NewLine);
-            foreach (string line in content) 
-            { 
+
+            foreach (string line in content)
+            {
                 if (string.IsNullOrEmpty(line)) continue;
                 string[] fields = line.Split(',');
                 if (fields[0] == "Source File") continue;
                 switch (fields[2])
                 {
-                   case "\"ModelProcessor\"":
+                    case "\"ModelProcessor\"":
                         assetType = AssetTypes.MODEL;
                         break;
-                   case "\"TextureProcessor\"":
+                    case "\"TextureProcessor\"":
                         assetType = AssetTypes.TEXTURE;
                         break;
-                   case "\"SongProcessor\"":
+                    case "\"SongProcessor\"":
                         assetType = AssetTypes.AUDIO;
                         break;
-                   case "\"EffectProcessor\"":
+                    case "\"EffectProcessor\"":
                         assetType = AssetTypes.EFFECT;
                         break;
-                   default:
-                        Debug.Assert(false, "Unhandled processor.");
+                    default:
+                        Debug.Assert(false, "Unhandled processor");
                         break;
                 }
                 if (AddAsset(assetType, fields[1])) updated = true;
@@ -75,11 +75,11 @@ namespace Editor.Engine
             if (updated) OnAssetsUpdated?.Invoke();
         }
 
-        private bool AddAsset(AssetTypes _assetType, string _assetName)
+        private bool AddAsset(AssetTypes assetType, string assetName)
         {
-            if (!Assets.ContainsKey(_assetType)) Assets.Add(_assetType, new());
-            string assetName = Path.GetFileNameWithoutExtension(_assetName);
-            Assets[_assetType].Add(assetName);
+            if (!Assets.ContainsKey(assetType)) Assets.Add(assetType, new());
+            string assetNameWithoutExtension = Path.GetFileNameWithoutExtension(assetName);
+            Assets[assetType].Add(assetNameWithoutExtension);
             return true;
         }
 
