@@ -10,6 +10,6 @@ namespace Editor.Engine.Interfaces
 
     internal interface ISoundEmitter
     {
-        public SoundEffectInstance[] SoundEffects { get; }
+        public SFXInstance[] SoundEffects { get; }
     }
 }

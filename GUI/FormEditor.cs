@@ -5,6 +5,7 @@ using Editor.GUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
@@ -27,6 +28,17 @@ namespace Editor
             KeyPreview = true;
             StatusStrip.Text = Directory.GetCurrentDirectory();
             listBoxAssets.MouseDown += ListBoxAssets_MouseDown;
+            listBoxPrefabs.MouseDown += ListBoxPrefabs_MouseDown;
+        }
+
+        private void ListBoxPrefabs_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (listBoxPrefabs.Items.Count == 0) return;
+
+            int index = listBoxPrefabs.IndexFromPoint(e.X, e.Y);
+            if (index < 0) return;
+            var lip = listBoxPrefabs.Items[index] as ListItemPrefab;
+            DoDragDrop(lip, DragDropEffects.Copy);
         }
 
         private void ListBoxAssets_MouseDown(object sender, MouseEventArgs e)
@@ -100,6 +112,17 @@ namespace Editor
                     menuStrip.Show(new System.Drawing.Point(e.X, e.Y));
                 }
             }
+            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
+            {
+                var lip = e.Data.GetData(typeof(ListItemPrefab)) as ListItemPrefab;
+                string fileName = Path.Combine(Game.Project.Folder, lip.Name);
+                using var stream = File.Open(fileName, FileMode.Open);
+                using var reader = new BinaryReader(stream, Encoding.UTF8, false);
+                Models m = new Models();
+                m.Deserialize(reader, m_game);
+                m_game.Project.CurrentLevel?.AddModel(m);
+                listBoxLevel.Items.Add(new ListItemLevel() { Model = m });
+            }
         }
 
         private void GameForm_DragOver(object sender, DragEventArgs e)
@@ -122,7 +145,7 @@ namespace Editor
                 {
                     if (obj is IMaterial) m_dropped = obj as IMaterial;
                 }
-                else if (lia.Type == AssetTypes.SFX) 
+                else if (lia.Type == AssetTypes.SFX)
                 {
                     if (obj is ISoundEmitter) m_dropped = obj as ISoundEmitter;
                 }
@@ -130,6 +153,10 @@ namespace Editor
                 {
                     e.Effect = DragDropEffects.Copy;
                 }
+            }
+            else if (e.Data.GetDataPresent(typeof(ListItemPrefab)))
+            {
+                e.Effect = DragDropEffects.Copy;
             }
         }
 
@@ -139,11 +166,7 @@ namespace Editor
             var tmi = sender as ToolStripMenuItem;
             int index = Int32.Parse(tmi.Name);
             var lia = tmi.Tag as ListItemAsset;
-            SoundEffect ef = m_game.Content.Load<SoundEffect>(lia.Name);
-            SoundEffectInstance efi = ef.CreateInstance();
-            efi.Volume = 1;
-            efi.IsLooped = false;
-            emitter.SoundEffects[index] = efi;
+            emitter.SoundEffects[index] = SFXInstance.Create(m_game, lia.Name);
         }
 
         private void GameForm_MouseMove(object sender, MouseEventArgs e)
@@ -208,6 +231,8 @@ namespace Editor
                 Game.Project = new(Game, sfd.FileName);
                 Game.Project.OnAssetsUpdated += Project_OnAssetsUpdated;
                 Game.Project.AssetMonitor.UpdateAssetDB();
+                UpdatePrefabsList();
+                UpdateModelsList();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
@@ -249,6 +274,27 @@ namespace Editor
             });
         }
 
+        private void UpdateModelsList()
+        {
+            listBoxLevel.Items.Clear(); 
+            List<Models> models = Game.Project.CurrentLevel?.GetModelsList();
+            foreach (Models model in models) 
+            {
+                listBoxLevel.Items.Add(new ListItemLevel() { Model = model });
+            }
+        }
+
+        private void UpdatePrefabsList()
+        {
+            listBoxPrefabs.Items.Clear();
+            string[] prefabs = Directory.GetFiles(Game.Project.Folder, "*.prefab");
+            foreach (string prefab in prefabs)
+            {
+                string fileName  = Path.GetFileName(prefab);
+                ListItemPrefab item = new() { Name = fileName };
+                listBoxPrefabs.Items.Add(item);
+            }
+        }
 
         private void FormEditor_Load(object sender, EventArgs e)
         {
@@ -273,6 +319,10 @@ namespace Editor
                 using var reader = new BinaryReader(stream, Encoding.UTF8, false);
                 Game.Project = new();
                 Game.Project.Deserialize(reader, Game);
+                Game.Project.OnAssetsUpdated += Project_OnAssetsUpdated;
+                Game.Project.AssetMonitor.UpdateAssetDB();
+                UpdatePrefabsList();
+                UpdateModelsList();
                 Text = "Our Cool Editor - " + Game.Project.Name;
                 Game.AdjustAspectRatio();
             }
@@ -305,6 +355,33 @@ namespace Editor
             if (index == -1) return;
             var lia = listBoxLevel.Items[index] as ListItemLevel;
             lia.Model.Selected = true;
+        }
+
+        private void createPrefabToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var models = Game.Project.CurrentLevel.GetSelectedModels();
+            if (models.Count == 0) 
+            {
+                MessageBox.Show("Please select a game object in the level to convert to a prefab.",
+                                "No Game Object Selected", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            Models m = models[0] as Models;
+            string fileName = Path.Combine(Game.Project.Folder, m.Name) + ".prefab";
+            if (File.Exists(fileName))
+            {
+                MessageBox.Show("Prefab already exists. Try renaming the game object or delete the existing prefab.",
+                                "Prefab Already Exists", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using var stream = File.Open(fileName, FileMode.Create);
+            using var writer = new BinaryWriter(stream, Encoding.UTF8, false);
+            m.Serialize(writer);
+
+            ListItemPrefab item = new() { Name = m.Name + ".prefab" };
+            listBoxPrefabs.Items.Add(item);
         }
     }
 }

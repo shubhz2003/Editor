@@ -17,7 +17,7 @@ namespace Editor.Engine
         // Accessors
         public Model Mesh { get; set; }
         public Material Material { get; private set; }
-        public SoundEffectInstance[] SoundEffects { get; private set; }
+        public SFXInstance[] SoundEffects { get; private set; }
         public Vector3 Position { get => _position; set { _position = value; } }
         public Vector3 Rotation { get => _rotation; set { _rotation = value; } }
         public float Scale { get; set; }
@@ -50,6 +50,8 @@ namespace Editor.Engine
             string effect, Vector3 position, float scale)
         {
             Mesh = game.Content.Load<Model>(model);
+            //string combine = Path.Combine(game.Project.Folder, game.Project.AssetFolder);
+            //Mesh = game.Content.Load<Model>(Path.Combine(combine, model));
             Mesh.Tag = model;
             Name = model;
             Material = new Material();
@@ -57,7 +59,7 @@ namespace Editor.Engine
             SetShader(game, effect);
             Position = position;
             Scale = scale;
-            SoundEffects = new SoundEffectInstance[Enum.GetNames(typeof(SoundEffectTypes)).Length];
+            SoundEffects ??= new SFXInstance[Enum.GetNames(typeof(SoundEffectTypes)).Length]; // Compound Assignment
         }
 
         public void SetTexture(GameEditor game, string texture)
@@ -153,6 +155,20 @@ namespace Editor.Engine
             HelpSerialize.Vec3(stream, Position);
             HelpSerialize.Vec3(stream, Rotation);
             stream.Write(Scale);
+            stream.Write(Selected);
+            stream.Write(Name);
+            stream.Write(SoundEffects.Length);
+            foreach (var sfi in SoundEffects)
+            {
+                if (sfi == null)
+                {
+                    stream.Write("empty!");
+                }
+                else
+                {
+                    stream.Write(sfi.Name);
+                }
+            }
         }
 
         public void Deserialize(BinaryReader stream, GameEditor game)
@@ -163,7 +179,19 @@ namespace Editor.Engine
             Position = HelpDeserialize.Vec3(stream);
             Rotation = HelpDeserialize.Vec3(stream);
             Scale = stream.ReadSingle();
-            Material = new Material();
+            Selected = stream.ReadBoolean();
+            Name = stream.ReadString();
+
+            int sfxCount = stream.ReadInt32();
+            SoundEffects = new SFXInstance[sfxCount];
+            for (int count = 0; count < sfxCount; count++) 
+            {
+                string assetName = stream.ReadString();
+                if (assetName != "empty!")
+                {
+                    SoundEffects[count] = SFXInstance.Create(game, assetName);
+                }
+            }
             Create(game, mesh, texture, shader, Position, Scale);
         }
     }

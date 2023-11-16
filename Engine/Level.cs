@@ -33,6 +33,11 @@ namespace Editor.Engine
             _models.Add(model);
         }
 
+        public List<Models> GetModelsList()
+        {
+            return _models;
+        }
+
         public void ClearSelectedModels()
         {
             foreach (var model in _models) 
@@ -204,9 +209,9 @@ namespace Editor.Engine
                     m.Selected)
                 {
                     var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
-                    if (sfi?.State == SoundState.Stopped)
+                    if (sfi?.Instance.State == SoundState.Stopped)
                     {
-                        sfi.Play();
+                        sfi.Instance.Play();
                     }
                 }
             }

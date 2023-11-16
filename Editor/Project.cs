@@ -78,6 +78,9 @@ namespace Editor.Editor
             stream.Write(clIndex);
             stream.Write(Folder);
             stream.Write(Name);
+            stream.Write(ContentFolder);
+            stream.Write(AssetFolder);
+            stream.Write(ObjectFolder);
         }
 
         public void Deserialize(BinaryReader stream, GameEditor game)
@@ -93,6 +96,11 @@ namespace Editor.Editor
             CurrentLevel = Levels[clIndex];
             Folder = stream.ReadString();
             Name = stream.ReadString();
+            ContentFolder = stream.ReadString();
+            AssetFolder = stream.ReadString();
+            ObjectFolder = stream.ReadString();
+            AssetMonitor = new(ObjectFolder);
+            AssetMonitor.OnAssetsUpdated += AssetMon_OnAssetsUpdated;
         }
     }
 }
