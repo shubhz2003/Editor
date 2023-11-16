@@ -1,5 +1,6 @@
 ﻿using Editor.Editor;
 using Editor.Engine;
+using Editor.GUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Windows.Forms;
@@ -39,7 +40,7 @@ namespace Editor
             gameForm.TopLevel = false;
             gameForm.Dock = DockStyle.Fill;
             gameForm.FormBorderStyle = FormBorderStyle.None;
-            formEditor.splitContainer.Panel1.Controls.Add(gameForm);
+            formEditor.splitContainer2.Panel2.Controls.Add(gameForm);
         }
 
         protected override void Initialize()
@@ -66,18 +67,6 @@ namespace Editor
             camera.Update(camera.Position, _graphics.GraphicsDevice.Viewport.AspectRatio);
         }
 
-        protected override void Update(GameTime gameTime)
-        {
-            if (Project != null)
-            {
-                Content.RootDirectory = Project.ContentFolder + "\\bin";
-                Project?.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-                InputController.Instance.Clear();
-                UpdateSelected();
-            }
-            base.Update(gameTime);
-        }
-
         private void UpdateSelected()
         {
             if (Models.SelectedDirty)
@@ -86,6 +75,7 @@ namespace Editor
                 if (models.Count == 0)
                 {
                     _formEditor.propertyGrid.SelectedObject = null;
+                    _formEditor.listBoxLevel.SelectedIndex = -1;
                 }
                 else if (models.Count > 1)
                 {
@@ -94,13 +84,36 @@ namespace Editor
                 else
                 {
                     _formEditor.propertyGrid.SelectedObject = models[0];
+                    for (int count  = 0; count < _formEditor.listBoxLevel.Items.Count; count++)
+                    {
+                        ListItemLevel lil = _formEditor.listBoxLevel.Items[count] as ListItemLevel;
+                        if (lil.Model == models[0])
+                        {
+                            _formEditor.listBoxLevel.SetSelected(count, true);
+                        }
+                    }
                 }
             }
             Models.SelectedDirty = false;
         }
 
+        protected override void Update(GameTime gameTime)
+        {
+            if (Project != null)
+            {
+                //ScriptController.Instance.Execute("BeforeUpdateMain");
+                Content.RootDirectory = Project.ContentFolder + "\\bin";
+                Project?.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                InputController.Instance.Clear();
+                UpdateSelected();
+                //ScriptController.Instance.Execute("AfterUpdateMain");
+            }
+            base.Update(gameTime);
+        }
+
         protected override void Draw(GameTime gameTime)
         {
+            //ScriptController.Instance.Execute("BeforeRenderMain");
             GraphicsDevice.Clear(Color.CornflowerBlue);
             if (Project == null) return;
             GraphicsDevice.RasterizerState = _rasterizerState;
@@ -110,6 +123,7 @@ namespace Editor
             _fonts.Draw(_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);
             _fonts.Draw(_spriteBatch, 16, Project.CurrentLevel.ToString(), new Vector2(20, 80), Color.Yellow);
             _spriteBatch.End();
+            //ScriptController.Instance.Execute("AfterRenderMain");
 
             base.Draw(gameTime);
         }

@@ -2,6 +2,7 @@
 using Editor.Engine.Lights;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -24,12 +25,24 @@ namespace Editor.Engine
 
         public void LoadContent(GameEditor game)
         {
-            terrain = new(game.DefaultEffect, game.DefaultHeightMap, game.DefaultGrass, 200, game.GraphicsDevice);
+            //terrain = new(game.DefaultEffect, game.DefaultHeightMap, game.DefaultGrass, 200, game.GraphicsDevice);
         }
 
         public void AddModel(Models model)
         {
             _models.Add(model);
+        }
+
+        public void ClearSelectedModels()
+        {
+            foreach (var model in _models) 
+            {
+                model.Selected = false;
+            }
+            if (terrain != null)
+            {
+                terrain.Selected = false;
+            }
         }
 
         public List<ISelectable> GetSelectedModels()
@@ -183,12 +196,29 @@ namespace Editor.Engine
             return null;
         }
 
+        public void HandleAudio()
+        {
+            foreach (Models m in _models)
+            {
+                if ((Models.SelectedDirty) &&
+                    m.Selected)
+                {
+                    var sfi = m.SoundEffects[(int)SoundEffectTypes.OnSelect];
+                    if (sfi?.State == SoundState.Stopped)
+                    {
+                        sfi.Play();
+                    }
+                }
+            }
+        }
+
         public void Update(float delta)
         {
             HandleTranslate();
             HandleRotate(delta);
             HandleScale(delta);
             HandlePick();
+            HandleAudio();
         }
 
         public void Render()

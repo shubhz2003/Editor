@@ -37,17 +37,29 @@
             saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            assetsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             splitContainer = new System.Windows.Forms.SplitContainer();
+            splitContainer2 = new System.Windows.Forms.SplitContainer();
+            splitContainer3 = new System.Windows.Forms.SplitContainer();
+            listBoxLevel = new System.Windows.Forms.ListBox();
+            listBoxPrefabs = new System.Windows.Forms.ListBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             propertyGrid = new System.Windows.Forms.PropertyGrid();
             listBoxAssets = new System.Windows.Forms.ListBox();
-            assetsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             statusStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
+            splitContainer.Panel1.SuspendLayout();
             splitContainer.Panel2.SuspendLayout();
             splitContainer.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
+            splitContainer2.Panel1.SuspendLayout();
+            splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer3).BeginInit();
+            splitContainer3.Panel1.SuspendLayout();
+            splitContainer3.Panel2.SuspendLayout();
+            splitContainer3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -124,6 +136,20 @@
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
             // 
+            // assetsToolStripMenuItem
+            // 
+            assetsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { importToolStripMenuItem });
+            assetsToolStripMenuItem.Name = "assetsToolStripMenuItem";
+            assetsToolStripMenuItem.Size = new System.Drawing.Size(52, 22);
+            assetsToolStripMenuItem.Text = "Assets";
+            // 
+            // importToolStripMenuItem
+            // 
+            importToolStripMenuItem.Name = "importToolStripMenuItem";
+            importToolStripMenuItem.Size = new System.Drawing.Size(110, 22);
+            importToolStripMenuItem.Text = "Import";
+            importToolStripMenuItem.Click += importToolStripMenuItem_Click;
+            // 
             // splitContainer
             // 
             splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -133,6 +159,7 @@
             // 
             // splitContainer.Panel1
             // 
+            splitContainer.Panel1.Controls.Add(splitContainer2);
             splitContainer.Panel1.SizeChanged += splitContainer_Panel1_SizeChanged;
             // 
             // splitContainer.Panel2
@@ -142,6 +169,58 @@
             splitContainer.SplitterDistance = 368;
             splitContainer.SplitterWidth = 3;
             splitContainer.TabIndex = 2;
+            // 
+            // splitContainer2
+            // 
+            splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
+            splitContainer2.Location = new System.Drawing.Point(0, 0);
+            splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel1
+            // 
+            splitContainer2.Panel1.Controls.Add(splitContainer3);
+            splitContainer2.Size = new System.Drawing.Size(368, 224);
+            splitContainer2.SplitterDistance = 122;
+            splitContainer2.TabIndex = 0;
+            // 
+            // splitContainer3
+            // 
+            splitContainer3.Dock = System.Windows.Forms.DockStyle.Fill;
+            splitContainer3.Location = new System.Drawing.Point(0, 0);
+            splitContainer3.Name = "splitContainer3";
+            splitContainer3.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer3.Panel1
+            // 
+            splitContainer3.Panel1.Controls.Add(listBoxLevel);
+            // 
+            // splitContainer3.Panel2
+            // 
+            splitContainer3.Panel2.Controls.Add(listBoxPrefabs);
+            splitContainer3.Size = new System.Drawing.Size(122, 224);
+            splitContainer3.SplitterDistance = 80;
+            splitContainer3.TabIndex = 0;
+            // 
+            // listBoxLevel
+            // 
+            listBoxLevel.Dock = System.Windows.Forms.DockStyle.Fill;
+            listBoxLevel.FormattingEnabled = true;
+            listBoxLevel.ItemHeight = 15;
+            listBoxLevel.Location = new System.Drawing.Point(0, 0);
+            listBoxLevel.Name = "listBoxLevel";
+            listBoxLevel.Size = new System.Drawing.Size(122, 80);
+            listBoxLevel.TabIndex = 0;
+            listBoxLevel.SelectedIndexChanged += listBoxLevel_SelectedIndexChanged;
+            // 
+            // listBoxPrefabs
+            // 
+            listBoxPrefabs.Dock = System.Windows.Forms.DockStyle.Fill;
+            listBoxPrefabs.FormattingEnabled = true;
+            listBoxPrefabs.ItemHeight = 15;
+            listBoxPrefabs.Location = new System.Drawing.Point(0, 0);
+            listBoxPrefabs.Name = "listBoxPrefabs";
+            listBoxPrefabs.Size = new System.Drawing.Size(122, 140);
+            listBoxPrefabs.TabIndex = 0;
             // 
             // splitContainer1
             // 
@@ -180,20 +259,6 @@
             listBoxAssets.Size = new System.Drawing.Size(189, 112);
             listBoxAssets.TabIndex = 0;
             // 
-            // assetsToolStripMenuItem
-            // 
-            assetsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { importToolStripMenuItem });
-            assetsToolStripMenuItem.Name = "assetsToolStripMenuItem";
-            assetsToolStripMenuItem.Size = new System.Drawing.Size(52, 22);
-            assetsToolStripMenuItem.Text = "Assets";
-            // 
-            // importToolStripMenuItem
-            // 
-            importToolStripMenuItem.Name = "importToolStripMenuItem";
-            importToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            importToolStripMenuItem.Text = "Import";
-            importToolStripMenuItem.Click += importToolStripMenuItem_Click;
-            // 
             // FormEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -212,9 +277,17 @@
             statusStrip1.PerformLayout();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
+            splitContainer.Panel1.ResumeLayout(false);
             splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer).EndInit();
             splitContainer.ResumeLayout(false);
+            splitContainer2.Panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
+            splitContainer2.ResumeLayout(false);
+            splitContainer3.Panel1.ResumeLayout(false);
+            splitContainer3.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer3).EndInit();
+            splitContainer3.ResumeLayout(false);
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
@@ -230,7 +303,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        public System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem createToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
@@ -240,5 +313,9 @@
         private System.Windows.Forms.ListBox listBoxAssets;
         private System.Windows.Forms.ToolStripMenuItem assetsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importToolStripMenuItem;
+        public System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.SplitContainer splitContainer3;
+        public System.Windows.Forms.ListBox listBoxLevel;
+        private System.Windows.Forms.ListBox listBoxPrefabs;
     }
 }
