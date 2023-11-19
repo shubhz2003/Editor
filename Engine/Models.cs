@@ -49,9 +49,9 @@ namespace Editor.Engine
             GameEditor game, string model, string texture,
             string effect, Vector3 position, float scale)
         {
-            Mesh = game.Content.Load<Model>(model);
-            //string combine = Path.Combine(game.Project.Folder, game.Project.AssetFolder);
-            //Mesh = game.Content.Load<Model>(Path.Combine(combine, model));
+            string fileName = Path.Combine(game.Project.Folder,
+                game.Project.ContentFolder, game.Project.AssetFolder, model);
+            Mesh = game.Content.Load<Model>(fileName);
             Mesh.Tag = model;
             Name = model;
             Material = new Material();
@@ -59,7 +59,8 @@ namespace Editor.Engine
             SetShader(game, effect);
             Position = position;
             Scale = scale;
-            SoundEffects ??= new SFXInstance[Enum.GetNames(typeof(SoundEffectTypes)).Length]; // Compound Assignment
+            SoundEffects ??= new SFXInstance[Enum.GetNames(typeof
+                (SoundEffectTypes)).Length]; // Compound Assignment
         }
 
         public void SetTexture(GameEditor game, string texture)

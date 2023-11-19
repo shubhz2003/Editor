@@ -69,6 +69,11 @@ namespace Editor.Editor
 
         public void Serialize(BinaryWriter stream)
         {
+            stream.Write(Folder);
+            stream.Write(Name);
+            stream.Write(ContentFolder);
+            stream.Write(AssetFolder);
+            stream.Write(ObjectFolder);
             stream.Write(Levels.Count);
             int clIndex = Levels.IndexOf(CurrentLevel);
             foreach (Level level in Levels)
@@ -76,15 +81,15 @@ namespace Editor.Editor
                 level.Serialize(stream);
             }
             stream.Write(clIndex);
-            stream.Write(Folder);
-            stream.Write(Name);
-            stream.Write(ContentFolder);
-            stream.Write(AssetFolder);
-            stream.Write(ObjectFolder);
         }
 
         public void Deserialize(BinaryReader stream, GameEditor game)
         {
+            Folder = stream.ReadString();
+            Name = stream.ReadString();
+            ContentFolder = stream.ReadString();
+            AssetFolder = stream.ReadString();
+            ObjectFolder = stream.ReadString();
             int levelCount = stream.ReadInt32();
             for (int count = 0; count < levelCount; count++)
             {
@@ -93,12 +98,7 @@ namespace Editor.Editor
                 Levels.Add(level);
             }
             int clIndex = stream.ReadInt32();
-            CurrentLevel = Levels[clIndex];
-            Folder = stream.ReadString();
-            Name = stream.ReadString();
-            ContentFolder = stream.ReadString();
-            AssetFolder = stream.ReadString();
-            ObjectFolder = stream.ReadString();
+            CurrentLevel = Levels[clIndex];          
             AssetMonitor = new(ObjectFolder);
             AssetMonitor.OnAssetsUpdated += AssetMon_OnAssetsUpdated;
         }
