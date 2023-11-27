@@ -1,5 +1,6 @@
 ﻿using Editor.Editor;
 using Editor.Engine;
+using Editor.Engine.Scripting;
 using Editor.GUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -101,19 +102,19 @@ namespace Editor
         {
             if (Project != null)
             {
-                //ScriptController.Instance.Execute("BeforeUpdateMain");
+                ScriptController.Instance.Execute("BeforeUpdateMain");
                 Content.RootDirectory = Project.ContentFolder + "\\bin";
                 Project?.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
                 InputController.Instance.Clear();
                 UpdateSelected();
-                //ScriptController.Instance.Execute("AfterUpdateMain");
+                ScriptController.Instance.Execute("AfterUpdateMain");
             }
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            //ScriptController.Instance.Execute("BeforeRenderMain");
+            ScriptController.Instance.Execute("BeforeRenderMain");
             GraphicsDevice.Clear(Color.CornflowerBlue);
             if (Project == null) return;
             GraphicsDevice.RasterizerState = _rasterizerState;
@@ -123,7 +124,7 @@ namespace Editor
             _fonts.Draw(_spriteBatch, 20, InputController.Instance.ToString(), new Vector2(20, 20), Color.White);
             _fonts.Draw(_spriteBatch, 16, Project.CurrentLevel.ToString(), new Vector2(20, 80), Color.Yellow);
             _spriteBatch.End();
-            //ScriptController.Instance.Execute("AfterRenderMain");
+            ScriptController.Instance.Execute("AfterRenderMain");
 
             base.Draw(gameTime);
         }

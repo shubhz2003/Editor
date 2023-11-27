@@ -31,7 +31,7 @@ namespace Editor.Engine
             if (obj is ISelectable)
             {
                 ISelectable s = obj as ISelectable;
-                e.Parameters["Tint"].SetValue(s.Selected);
+                e.Parameters["Tint"]?.SetValue(s.Selected);
             }
             else
             {

@@ -25,6 +25,16 @@ namespace Editor.Engine
             Update(position, aspectRation);
         }
 
+        public void UpdatePosition(float _x, float _y, float _z)
+        {
+            Update(Position + new Vector3(_x, _y, _z), AspectRatio);
+        }
+
+        public void UpdateRotation(float _y)
+        {
+            Rotate(new Vector3(0, _y, 0));
+        }
+
         public void Update(Vector3 position, float aspectRatio)
         {
             Position = position;

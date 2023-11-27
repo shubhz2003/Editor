@@ -92,7 +92,7 @@ namespace Editor
                 else if (lia.Type == AssetTypes.EFFECT)
                 {
                     IMaterial material = m_dropped as IMaterial;
-                    material?.SetTexture(m_game, lia.Name);
+                    material?.SetShader(m_game, lia.Name);
                 }
                 else if (lia.Type == AssetTypes.SFX)
                 {
